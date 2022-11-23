@@ -1,115 +1,290 @@
+// Copyright 2013 The Flutter Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+final GlobalKey<NavigatorState> _rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root');
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shell');
+
+// This scenario demonstrates how to set up nested navigation using ShellRoute,
+// which is a pattern where an additional Navigator is placed in the widget tree
+// to be used instead of the root navigator. This allows deep-links to display
+// pages along with other UI components such as a BottomNavigationBar.
+//
+// This example demonstrates how to display a route within a ShellRoute and also
+// push a screen using a different navigator (such as the root Navigator) by
+// providing a `parentNavigatorKey`.
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: ShellRouteExampleApp()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+final routerProvider = Provider((ref) => GoRouter(
+      navigatorKey: _rootNavigatorKey,
+      initialLocation: '/a',
+      routes: <RouteBase>[
+        /// Application shell
+        ShellRoute(
+          navigatorKey: _shellNavigatorKey,
+          builder: (BuildContext context, GoRouterState state, Widget child) {
+            return ScaffoldWithNavBar(child: child);
+          },
+          routes: <RouteBase>[
+            /// The first screen to display in the bottom navigation bar.
+            GoRoute(
+              path: '/a',
+              builder: (BuildContext context, GoRouterState state) {
+                return const ScreenA();
+              },
+              routes: <RouteBase>[
+                // The details screen to display stacked on the inner Navigator.
+                // This will cover screen A but not the application shell.
+                GoRoute(
+                  path: 'details',
+                  builder: (BuildContext context, GoRouterState state) {
+                    return const DetailsScreen(label: 'A');
+                  },
+                ),
+              ],
+            ),
 
-  // This widget is the root of your application.
+            /// Displayed when the second item in the the bottom navigation bar is
+            /// selected.
+            GoRoute(
+              path: '/b',
+              builder: (BuildContext context, GoRouterState state) {
+                return const ScreenB();
+              },
+              routes: <RouteBase>[
+                /// Same as "/a/details", but displayed on the root Navigator by
+                /// specifying [parentNavigatorKey]. This will cover both screen B
+                /// and the application shell.
+                GoRoute(
+                  path: 'details',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (BuildContext context, GoRouterState state) {
+                    return const DetailsScreen(label: 'B');
+                  },
+                ),
+              ],
+            ),
+
+            /// The third screen to display in the bottom navigation bar.
+            GoRoute(
+              path: '/c',
+              builder: (BuildContext context, GoRouterState state) {
+                return const ScreenC();
+              },
+              routes: <RouteBase>[
+                // The details screen to display stacked on the inner Navigator.
+                // This will cover screen A but not the application shell.
+                GoRoute(
+                  path: 'details',
+                  builder: (BuildContext context, GoRouterState state) {
+                    return const DetailsScreen(label: 'C');
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ));
+
+/// An example demonstrating how to use [ShellRoute]
+class ShellRouteExampleApp extends ConsumerWidget {
+  /// Creates a [ShellRouteExampleApp]
+  const ShellRouteExampleApp({Key? key}) : super(key: key);
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      routerConfig: router,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+/// Builds the "shell" for the app by building a Scaffold with a
+/// BottomNavigationBar, where [child] is placed in the body of the Scaffold.
+class ScaffoldWithNavBar extends StatelessWidget {
+  /// Constructs an [ScaffoldWithNavBar].
+  const ScaffoldWithNavBar({
+    required this.child,
+    Key? key,
+  }) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  /// The widget to display in the body of the Scaffold.
+  /// In this sample, it is a Navigator.
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      body: child,
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'A Screen',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.business),
+            label: 'B Screen',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notification_important_rounded),
+            label: 'C Screen',
+          ),
+        ],
+        currentIndex: _calculateSelectedIndex(context),
+        onTap: (int idx) => _onItemTapped(idx, context),
       ),
+    );
+  }
+
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String location = GoRouterState.of(context).location;
+    if (location.startsWith('/a')) {
+      return 0;
+    }
+    if (location.startsWith('/b')) {
+      return 1;
+    }
+    if (location.startsWith('/c')) {
+      return 2;
+    }
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    switch (index) {
+      case 0:
+        GoRouter.of(context).go('/a');
+        break;
+      case 1:
+        GoRouter.of(context).go('/b');
+        break;
+      case 2:
+        GoRouter.of(context).go('/c');
+        break;
+    }
+  }
+}
+
+/// The first screen in the bottom navigation bar.
+class ScreenA extends StatelessWidget {
+  /// Constructs a [ScreenA] widget.
+  const ScreenA({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            const Text('Screen A'),
+            TextButton(
+              onPressed: () {
+                GoRouter.of(context).go('/a/details');
+              },
+              child: const Text('View A details'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+/// The second screen in the bottom navigation bar.
+class ScreenB extends StatelessWidget {
+  /// Constructs a [ScreenB] widget.
+  const ScreenB({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Screen B'),
+            TextButton(
+              onPressed: () {
+                GoRouter.of(context).go('/b/details');
+              },
+              child: const Text('View B details'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The third screen in the bottom navigation bar.
+class ScreenC extends StatelessWidget {
+  /// Constructs a [ScreenC] widget.
+  const ScreenC({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Screen C'),
+            TextButton(
+              onPressed: () {
+                GoRouter.of(context).go('/c/details');
+              },
+              child: const Text('View C details'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The details screen for either the A, B or C screen.
+class DetailsScreen extends StatelessWidget {
+  /// Constructs a [DetailsScreen].
+  const DetailsScreen({
+    required this.label,
+    Key? key,
+  }) : super(key: key);
+
+  /// The label to display in the center of the screen.
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Details Screen'),
+      ),
+      body: Center(
+        child: Text(
+          'Details for $label',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+      ),
     );
   }
 }
