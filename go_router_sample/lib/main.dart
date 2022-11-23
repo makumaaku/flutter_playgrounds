@@ -67,8 +67,9 @@ final routerProvider = Provider((ref) => GoRouter(
                 GoRoute(
                   path: 'details',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const DetailsScreen(label: 'B');
+                  pageBuilder: (_, __) {
+                    return _buildPageWithSlideAnimation(
+                        const DetailsScreen(label: 'B'));
                   },
                 ),
               ],
@@ -84,17 +85,58 @@ final routerProvider = Provider((ref) => GoRouter(
                 // The details screen to display stacked on the inner Navigator.
                 // This will cover screen A but not the application shell.
                 GoRoute(
-                  path: 'details',
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const DetailsScreen(label: 'C');
-                  },
-                ),
+                    path: 'details',
+                    pageBuilder: (_, __) {
+                      return _buildPageWithFadeAnimation(
+                          const DetailsScreen(label: 'C'));
+                    }),
               ],
             ),
           ],
         ),
       ],
     ));
+
+// フェードアニメーション
+CustomTransitionPage<void> _buildPageWithFadeAnimation(Widget page) {
+  return CustomTransitionPage<void>(
+    child: page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation.drive(
+          Tween<double>(
+            begin: 0,
+            end: 1,
+          ).chain(
+            CurveTween(curve: Curves.easeIn),
+          ),
+        ),
+        child: child,
+      );
+    },
+  );
+}
+
+// スライドアニメーション
+CustomTransitionPage<void> _buildPageWithSlideAnimation(Widget page) {
+  return CustomTransitionPage<void>(
+    child: page,
+    transitionDuration: const Duration(milliseconds: 500),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: animation.drive(
+          Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).chain(
+            CurveTween(curve: Curves.easeIn),
+          ),
+        ),
+        child: child,
+      );
+    },
+  );
+}
 
 /// An example demonstrating how to use [ShellRoute]
 class ShellRouteExampleApp extends ConsumerWidget {
