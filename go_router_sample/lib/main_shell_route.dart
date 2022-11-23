@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -33,6 +35,8 @@ final routerProvider = Provider((ref) => GoRouter(
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (BuildContext context, GoRouterState state, Widget child) {
+            // ナビゲーションスタックが置き替わらないとfullPath(details)が反映されない。
+            log('Root: ${state.fullpath}');
             return ScaffoldWithNavBar(child: child);
           },
           routes: <RouteBase>[
@@ -40,6 +44,7 @@ final routerProvider = Provider((ref) => GoRouter(
             GoRoute(
               path: '/a',
               builder: (BuildContext context, GoRouterState state) {
+                log('Path A: ${state.fullpath}');
                 return const ScreenA();
               },
               routes: <RouteBase>[
@@ -48,6 +53,7 @@ final routerProvider = Provider((ref) => GoRouter(
                 GoRoute(
                   path: 'details',
                   builder: (BuildContext context, GoRouterState state) {
+                    log('Details: ${state.fullpath}');
                     return const DetailsScreen(label: 'A');
                   },
                 ),
@@ -241,7 +247,7 @@ class ScreenA extends StatelessWidget {
             const Text('Screen A'),
             TextButton(
               onPressed: () {
-                GoRouter.of(context).go('/a/details');
+                GoRouter.of(context).push('/a/details');
               },
               child: const Text('View A details'),
             ),
