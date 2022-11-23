@@ -25,6 +25,7 @@ void main() {
 }
 
 final routerProvider = Provider((ref) => GoRouter(
+      debugLogDiagnostics: true,
       navigatorKey: _rootNavigatorKey,
       initialLocation: '/a',
       routes: <RouteBase>[
@@ -194,6 +195,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     );
   }
 
+  /// GoRouterStateからロケーション情報をリアルタイムで取得できる
   static int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).location;
     if (location.startsWith('/a')) {
@@ -322,9 +324,19 @@ class DetailsScreen extends StatelessWidget {
         title: const Text('Details Screen'),
       ),
       body: Center(
-        child: Text(
-          'Details for $label',
-          style: Theme.of(context).textTheme.headlineMedium,
+        child: Column(
+          children: [
+            Text(
+              'Details for $label',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            TextButton(
+              onPressed: () {
+                GoRouter.of(context).pop();
+              },
+              child: const Text('Back to Home'),
+            ),
+          ],
         ),
       ),
     );
