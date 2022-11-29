@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "685398201655",
+    "project_id": "flutter-playground-cb89c",
+    "storage_bucket": "flutter-playground-cb89c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:685398201655:android:9bed658378db6b77fbf6b2",
+        "android_client_info": {
+          "package_name": "com.makumaaku.firebase_auth_sample"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "685398201655-cp4o4ho39c7mrpq09s23ctsn8bj3bim9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNl-6xIp1pKZmB7cERUOFqqIEFxXeR3RY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "685398201655-cp4o4ho39c7mrpq09s23ctsn8bj3bim9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
